@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">Login to your account</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Wecome to the best store in the world! Happy surfing!</p>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="row">
+        <center>
+            <div class="col-8">
+                <form method="POST" action="{%url 'login'%}">
+                    {%csrf_token%}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" placeholder="Type your username here..." name="username" aria-describedby="emailHelp">
+                    </div>
+                    <div class="mb-3">
+                      <label for="password class="form-label">Password</label>
+                      <input type="password" placeholder="Type your password here..." class="form-control" name="password">
+                    </div>
+                    <button type="submit" class="btn btn-warning">Login</button>
+                  </form>
+            </div>
+        </center>
+    </div>
+</div>
+
+{% endblock %}
