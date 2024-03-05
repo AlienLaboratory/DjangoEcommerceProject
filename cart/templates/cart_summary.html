@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block content %}
+        <!-- Header-->
+        <header class="bg-dark py-5">
+            <div class="container px-4 px-lg-5 my-5">
+                <div class="text-center text-white">
+                    <h1 class="display-4 fw-bolder">Your Shopping Cart</h1>
+                    <p class="lead fw-normal text-white-50 mb-0">Here are the products you added to a cart</p>
+                </div>
+            </div>
+        </header>
+        <div class="container">
+        {%if cart_products %}
+            {% for product in cart_products %}
+            <div class="card mb-3" >
+                <div class="row g-0">
+                  <div class="col-md-4">
+                    <img src="{{product.image.url}}" class="img-fluid rounded-start" alt="...">
+                  </div>
+                  <div class="col-md-8">
+                    <center>
+                    <div class="card-body">
+                      <h5 class="card-title">{{product.name}}</h5>
+                      <p class="card-text">{{product.description}}</p>
+                      <p class="card-text"><small class="text-body-secondary"><small><strong>Last updated: </strong>{{product.created_at}}</small></small></p>
+                        {% if product.is_sale %}
+                        <div class="d-flex justify-content-center
+                        small text-warning mb-2">
+                            <div class="bi-star-fill"></div>
+                            &nbsp;&nbsp;Hot Sale!!!&nbsp;&nbsp;
+                            <div class="bi-star-fill"></div>
+                        </div>
+                        <!-- Product price-->
+                       <strike> ${{product.price}}</strike>
+                       &nbsp;
+                       ${{product.sale_price}}
+                        <br>
+                        {% else %}
+                        ${{product.price}}
+                        <br>
+                        {% endif %}
+                        <div class="row justify-content-center">
+                          <div class="col-md-2">Quantity:</div>
+                          <div class="col-md-2">
+                            <select id="select{{product.id}}" class="form-select" aria-label="Default select example">
+                              
+                               {% for key, value in quantities.items %}
+                                  {% if key == product.id|slugify %}
+                                  <option selected > {{value}} </option>
+                                  {% endif %}
+                               {% endfor %}
+                               <option value="1">1</option>
+                               <option value="2">2</option>
+                               <option value="3">3</option>
+                            </select>
+                          </div>
+                        </div> 
+                        <a href="{% url 'home' %}" class="btn btn-secondary"> Back to home </a>
+                        <button type="button" data-index="{{product.id}}"  class="btn btn-success cart-update"> Update </button>
+                        <button type="button" data-index="{{product.id}}"  class="btn btn-danger cart-delete"> Delete </button>
+                          
+
+                      </center>
+                    </div>
+                  </div>
+                </div>
+            {% endfor %}
+            <strong>Total: ${{total}}</strong>
+        {% else %}
+        <strong>There is nothing in your cart yet!</strong>
+        {%endif%}
+        
+        </div>
+        <script>
+          //Update cart
+          $(document).on('click','.cart-update', function(e){
+              e.preventDefault();
+              // get the product ID
+              let productId = $(this).data("index");
+              console.log("this?: "+ this)
+              console.log("watafuck" + productId);
+              $.ajax({
+                  type: 'POST', 
+                  url: "{% url 'cart_update' %}",
+                  data: {
+                      product_id: $(this).data('index'),
+                      product_qty: $('#select' + productId + ' option:selected').text(),
+                      csrfmiddlewaretoken: '{{csrf_token}}',
+                      action: 'post'
+                  },
+                  success: function(json){
+                      console.log(json)
+                      //document.getElementById("cart-counter").textContent  = 
+                      //json.cart_count
+                      //console.log(json.cart-count)
+                      location.reload();
+                  },
+                  error: function(xhr, errmsg, err){
+                      console.log(err)
+                      console.log(xhr)
+                  }
+              })
+          })
+          //Delete item from cart
+          $(document).on('click','.cart-delete', function(e){
+              e.preventDefault();
+              // get the product ID
+              let productId = $(this).data("index");
+              console.log("this?: "+ this)
+              console.log("watafuck" + productId);
+              $.ajax({
+                  type: 'POST', 
+                  url: "{% url 'cart_delete' %}",
+                  data: {
+                      product_id: $(this).data('index'),
+                      csrfmiddlewaretoken: '{{csrf_token}}',
+                      action: 'post'
+                  },
+                  success: function(json){
+                      console.log(json)
+                      //document.getElementById("cart-counter").textContent  = 
+                      //json.cart_count
+                      //console.log(json.cart-count)
+                      location.reload();
+                  },
+                  error: function(xhr, errmsg, err){
+                      console.log(err)
+                      console.log(xhr)
+                  }
+              })
+          })
+      </script>
+      
+        
+        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+  {% endblock %}
