@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect
-from .models import Product, Category
+from .models import Product, Category, Profile
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import SignUpForm
+from .forms import SignUpForm, UpdateUserForm, ChangePasswordForm, UserInfoForm
 from django import forms
+from django.contrib.auth.models import User
 # Create your views here.
 def home(request):
     products = Product.objects.all()
@@ -48,13 +49,70 @@ def register_user(request):
             #login user
             user = authenticate(username=username, password=password)
             login(request, user)
-            messages.success(request, ("You have been registered successfully!!!"))
-            return redirect('home')
+            messages.success(request, ("You have been registered successfully, add your billing information below"))
+            return redirect('update_info')
         else:
             messages.success(request, ("Error occured while registration!"))
             return redirect('home') 
     else:
         return render(request, 'register.html',{'form':form})
+
+
+def update_user(request):
+    if request.user.is_authenticated:
+        current_user = User.objects.get(id=request.user.id)
+        #instance parameter helps to maintain data of current user inside the form
+        update_form = UpdateUserForm(request.POST or None, instance=current_user)
+        if request.method == "POST":
+            if update_form.is_valid():
+                update_form.save()
+                login(request, current_user)
+                messages.success(request, ("User has been updated successfully!!!"))
+                return redirect('home') 
+        return render(request, 'update_user.html',{'update_form':update_form})
+    else:
+        messages.success(request, ("Login first to access this page!!!"))
+        return redirect('home')
+
+
+
+def update_password(request):
+    if request.user.is_authenticated:
+        current_user = request.user
+        if request.method == "POST":
+            form = ChangePasswordForm(current_user, request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Your Password is Updated Successfully")
+                login(request, current_user)
+                return redirect('update_user')
+            else:
+                for error in list(form.errors.values()):
+                    messages.error(request, error)
+                    return redirect('update_password')
+        else:
+            form = ChangePasswordForm(current_user)
+            return render(request, 'update_password.html',{'form':form})
+    else:
+        messages.success(request, ("Login first to access this page!!!"))
+        return redirect('home')   
+
+
+def update_info(request):
+    if request.user.is_authenticated:
+        current_user_profile = Profile.objects.get(user__id=request.user.id)
+        #instance parameter helps to maintain data of current user inside the form
+        form = UserInfoForm(request.POST or None, instance=current_user_profile)
+        if request.method == "POST":
+            if form.is_valid():
+                form.save()
+                
+                messages.success(request, ("Your Information has been updated successfully!!!"))
+                return redirect('home') 
+        return render(request, 'update_info.html',{'form':form})
+    else:
+        messages.success(request, ("Login first to access this page!!!"))
+        return redirect('home')
 
 
 
@@ -75,3 +133,9 @@ def category(request, foo):
     
     
     return render(request, 'product.html',{'product':product})
+
+
+def category_summary(request):
+    categories = Category.objects.all()
+    return render(request, 'category_summary.html',{'categories':categories})
+  

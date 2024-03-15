@@ -67,9 +67,9 @@
             },
             success: function(json){
                 console.log(json)
-                document.getElementById("cart-counter").textContent  = 
-                json.cart_count
-                console.log(json.cart-count)
+                document.getElementById("cart-counter").textContent  = json.cart_count
+                //console.log(json.cart-count)
+                location.reload();
             },
             error: function(xhr, errmsg, err){
                 console.log(err)
