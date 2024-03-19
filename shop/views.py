@@ -5,7 +5,28 @@ from django.contrib import messages
 from .forms import SignUpForm, UpdateUserForm, ChangePasswordForm, UserInfoForm
 from django import forms
 from django.contrib.auth.models import User
+from django.db.models import Q
+import json
+from cart.cart import Cart
 # Create your views here.
+
+
+def search(request):
+    #define if the form was filled
+    if request.method == "POST":
+        search_result = request.POST["search"]
+    #query products from db in filter use 'icontains' for case insensitive search
+        search_result = Product.objects.filter(Q(name__icontains=search_result) | Q(description__icontains=search_result)) 
+        if not search_result:
+             messages.success(request, ("There is nothing here for that query!"))
+             return render(request, 'search.html',{})
+        else:     
+            return render(request, 'search.html',{"search":search_result})
+    else:
+        return render(request, 'search.html',{})
+
+
+
 def home(request):
     products = Product.objects.all()
     return render(request, 'home.html',{'products':products})
@@ -23,6 +44,23 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            # Shoping cart persistance logic
+
+            current_user = Profile.objects.get(user__id=request.user.id)
+            #get saved cart from db
+            saved_cart = current_user.old_cart
+            #convert db string to python dict
+            if saved_cart:
+                #convert to dictionary using JSON
+                converted_cart = json.loads(saved_cart)
+                #add the loaded cart dictionary to user session
+                #get cart
+                cart = Cart(request)
+                #loop through the cart and add the items from the db
+                for key, value in converted_cart.items():
+                    cart.db_add(product=key,quantity=value)
+
+
             messages.success(request, ("You have been logged in successfully!!!"))
             return redirect('home')
         else:

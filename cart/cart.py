@@ -1,7 +1,22 @@
-from shop.models import Product
+from shop.models import Product, Profile
+
+def update_cart_state(self):
+         # Logic for logged in user
+        if self.request.user.is_authenticated:
+            #Get the current user profile
+            current_user = Profile.objects.filter(user__id=self.request.user.id)
+            #Convert object format {'1':2} to {"1":2}
+            scart = str(self.cart)
+            scart = scart.replace("\'","\"")
+            #Save cart for persistance to profile
+            current_user.update(old_cart=scart)
+
 class Cart():
     def __init__(self, request):
         self.session = request.session
+
+        #Get request
+        self.request = request
 
         # Get the current session key if it exists
         cart = self.session.get('session_key')
@@ -14,6 +29,21 @@ class Cart():
         # Context processors?
         self.cart = cart
 
+    
+    
+
+    def db_add(self, product, quantity):
+        product_id = str(product)
+        product_qty = str(quantity)
+
+        if product_id in self.cart:
+            pass
+        else:
+            self.cart[product_id] = int(product_qty)
+        self.session.modified = True
+
+        update_cart_state(self)
+
     def add(self, product, quantity):
         product_id = str(product.id)
         product_qty = str(quantity)
@@ -23,6 +53,9 @@ class Cart():
         else:
             self.cart[product_id] = int(product_qty)
         self.session.modified = True
+
+        update_cart_state(self)
+
 
     def __len__(self):
         return len(self.cart)
@@ -53,6 +86,8 @@ class Cart():
 
         self.session.modified = True
 
+        update_cart_state(self)
+
         return self.cart
     
     def delete_product(self, product):
@@ -66,6 +101,8 @@ class Cart():
             del cart[product_id]
 
         self.session.modified = True
+
+        update_cart_state(self)
 
         return self.cart
     
