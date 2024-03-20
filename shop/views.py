@@ -8,6 +8,8 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 import json
 from cart.cart import Cart
+from payment.forms import ShippingForm
+from payment.models import ShippingAddress
 # Create your views here.
 
 
@@ -139,15 +141,18 @@ def update_password(request):
 def update_info(request):
     if request.user.is_authenticated:
         current_user_profile = Profile.objects.get(user__id=request.user.id)
+        #shipping_info = ShippingAddress.objects.filter(user__id=request.user.id).first()
+        shipping_info = ShippingAddress.objects.get(user__id=request.user.id)
         #instance parameter helps to maintain data of current user inside the form
         form = UserInfoForm(request.POST or None, instance=current_user_profile)
+        shipping_form = ShippingForm(request.POST or None, instance=shipping_info)
         if request.method == "POST":
-            if form.is_valid():
+            if form.is_valid() or shipping_form.is_valid():
                 form.save()
-                
+                shipping_form.save()
                 messages.success(request, ("Your Information has been updated successfully!!!"))
                 return redirect('home') 
-        return render(request, 'update_info.html',{'form':form})
+        return render(request, 'update_info.html',{'form':form,'shipping_form':shipping_form})
     else:
         messages.success(request, ("Login first to access this page!!!"))
         return redirect('home')
